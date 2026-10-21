@@ -3,7 +3,7 @@
 SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 STEPS=(
-    "01_scrolling.sh"
+    "01_settings.sh"
     "02_homebrew.sh"
     "03_dock.sh"
     "04_desktop.sh"

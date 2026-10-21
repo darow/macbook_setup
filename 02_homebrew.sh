@@ -19,16 +19,3 @@ else
     echo "❌ Homebrew install failed."
     exit 1
 fi
-
-# dockutil
-if ! command -v dockutil >/dev/null 2>&1; then
-    echo "Installing dockutil..."
-    brew install dockutil
-fi
-
-if command -v dockutil >/dev/null 2>&1; then
-    echo "✔ dockutil ready."
-else
-    echo "❌ dockutil install failed."
-    exit 1
-fi

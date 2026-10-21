@@ -8,6 +8,20 @@ sleep 1
 
 echo "✔ Dock moved to the right, recent apps disabled."
 
+
+# dockutil
+if ! command -v dockutil >/dev/null 2>&1; then
+    echo "Installing dockutil..."
+    brew install dockutil
+fi
+
+if command -v dockutil >/dev/null 2>&1; then
+    echo "✔ dockutil ready."
+else
+    echo "❌ dockutil install failed."
+    exit 1
+fi
+
 # Очистка (если dockutil доступен)
 if command -v dockutil >/dev/null 2>&1; then
     DOCK_APPS=$(dockutil --list | awk -F'\t' '{print $1}')

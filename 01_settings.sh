@@ -29,3 +29,6 @@ echo "✔ Automatic capitalization disabled."
 
 # Применяем все изменения сразу
 killall cfprefsd
+
+defaults write com.apple.screencapture target clipboard
+killall SystemUIServer
