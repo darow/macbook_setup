@@ -7,6 +7,7 @@
 APPS=(
     # Консольные утилиты
     "formula|git|/usr/bin/git|Git"
+    "formula|protobuf|/opt/homebrew/bin/protoc|Google Protobuf"  # <── Правильный формат
 
     # Обычные GUI-приложения
     "cask|karabiner-elements|/Applications/Karabiner-Elements.app|Karabiner-Elements"
