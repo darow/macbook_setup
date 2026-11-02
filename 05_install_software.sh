@@ -23,6 +23,7 @@ APPS=(
     "cask|codex|/opt/homebrew/bin/codex|Codex CLI"
     "cask|maccy|/Applications/Maccy.app|Maccy (менеджер буфера)"
     "cask|jordanbaird-ice|/Applications/Ice.app|Ice (меню-бар)"
+    "cask|postman|/Applications/Postman.app|Postman"
 )
 
 for entry in "${APPS[@]}"; do
