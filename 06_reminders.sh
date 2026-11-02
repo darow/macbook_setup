@@ -1,4 +1,7 @@
 #!/bin/bash
+set -euo pipefail
+
+source "$(cd "$(dirname "$0")" && pwd)/lib/common.sh"
 
 echo ""
 echo "══════════════════════════════════════════"
@@ -36,11 +39,11 @@ echo "       1. Звук:"
 echo "          opera://settings/sounds"
 echo "          (Отключить 'Browser sounds' / Звуки браузера)"
 echo ""
-echo "       1. Звук:"
+echo "       2. Звук клавиатуры:"
 echo "          opera://settings/keyboard_sounds"
 echo "          (Отключить 'keyboard_sounds')"
 echo ""
-echo "       2. Тема:"
+echo "       3. Тема:"
 echo "          opera://settings/themes"
 echo "          (Выбрать светлую тему 'pay-to-win')"
 echo "──────────────────────────────────────────────────────────"

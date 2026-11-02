@@ -1,37 +1,35 @@
 #!/bin/bash
+set -euo pipefail
+
+source "$(cd "$(dirname "$0")" && pwd)/lib/common.sh"
 
 # ── Настройки комментария ключа ──────────────────────────────
-# Автоматически берем имя пользователя из системы
 CURRENT_USER=$(whoami)
-# Убрали обратные слеши, так как в двойных кавычках скобки безопасны
 KEY_COMMENT="{${CURRENT_USER}}-{gitlab}"
 
 # ── Генерация SSH-ключа ──────────────────────────────────────
-echo "→ Проверка SSH-ключа..."
+log_info "Проверка SSH-ключа..."
 
 if [ -f "$HOME/.ssh/id_ed25519" ]; then
-    echo "⚠️  SSH-ключ уже существует: $HOME/.ssh/id_ed25519"
+    log_warn "SSH-ключ уже существует: $HOME/.ssh/id_ed25519"
     echo "   Если вы хотите перегенерировать его, удалите файлы:"
     echo "   rm ~/.ssh/id_ed25519*"
 else
-    echo "→ Генерация нового SSH-ключа (Ed25519) с комментарием: $KEY_COMMENT"
-    
-    # Оборачиваем переменную в кавычки, чтобы пробелы и скобки передались корректно
-    ssh-keygen -t ed25519 -C "$KEY_COMMENT" -f "$HOME/.ssh/id_ed25519" -N ""
-    
-    if [ $? -eq 0 ]; then
-        echo "✔ Ключ успешно сгенерирован."
+    log_info "Генерация нового SSH-ключа (Ed25519) с комментарием: $KEY_COMMENT"
+
+    if ssh-keygen -t ed25519 -C "$KEY_COMMENT" -f "$HOME/.ssh/id_ed25519" -N ""; then
+        log_ok "Ключ успешно сгенерирован."
     else
-        echo "❌ Ошибка при генерации ключа."
+        log_err "Ошибка при генерации ключа."
         exit 1
     fi
 fi
 
 # ── Добавление ключа в ssh-agent и Keychain macOS ────────────
-echo "→ Добавление ключа в ssh-agent (macOS Keychain)..."
+log_info "Добавление ключа в ssh-agent (macOS Keychain)..."
 eval "$(ssh-agent -s)" >/dev/null 2>&1
-ssh-add --apple-use-keychain "$HOME/.ssh/id_ed25519" >/dev/null 2>&1
-echo "✔ Ключ добавлен в ssh-agent."
+ssh-add --apple-use-keychain "$HOME/.ssh/id_ed25519" >/dev/null 2>&1 || true
+log_ok "Ключ добавлен в ssh-agent."
 
 # ── Вывод публичного ключа для копирования ───────────────────
 echo ""

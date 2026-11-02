@@ -1,11 +1,12 @@
 #!/bin/bash
+set -euo pipefail
+
+source "$(cd "$(dirname "$0")" && pwd)/lib/common.sh"
 
 # Экспортируем путь к Homebrew для ВСЕХ дочерних скриптов
 export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 
-SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-
-SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPTS_DIR="$REPO_ROOT"
 LOG_FILE="$SCRIPTS_DIR/setup_log.txt"
 
 STEPS=(
@@ -24,6 +25,7 @@ STEPS=(
 > "$LOG_FILE"
 
 # Весь основной блок оборачиваем в {}, а вывод дублируем в tee
+set +e
 {
     for step in "${STEPS[@]}"; do
         SCRIPT="$SCRIPTS_DIR/$step"
@@ -32,9 +34,13 @@ STEPS=(
             echo "══════════════════════════════════════════"
             echo "  Running: $step"
             echo "══════════════════════════════════════════"
-            bash "$SCRIPT"
+            if ! bash "$SCRIPT"; then
+                log_err "Step failed: $step"
+                exit 1
+            fi
         else
-            echo "⚠️  Missing: $step"
+            log_warn "Missing: $step"
+            exit 1
         fi
     done
 
@@ -45,3 +51,6 @@ STEPS=(
     echo ""
     echo "📄 Лог сохранен в: $LOG_FILE"
 } 2>&1 | tee "$LOG_FILE"
+status=${PIPESTATUS[0]}
+set -e
+exit "$status"
