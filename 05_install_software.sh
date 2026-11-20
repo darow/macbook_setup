@@ -16,6 +16,7 @@ APPS=(
     "formula|protobuf|/opt/homebrew/bin/protoc|Google Protobuf"
     "formula|pkg-config|/opt/homebrew/bin/pkg-config|pkg-config"
     "formula|helm|/opt/homebrew/bin/helm|Helm"
+    "formula|golangci-lint|/opt/homebrew/bin/golangci-lint|golangci-lint (Go linter)"
     "formula|duti|/opt/homebrew/bin/duti|duti (смена ассоциаций файлов)"
 
     # Обычные GUI-приложения
