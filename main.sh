@@ -19,6 +19,7 @@ STEPS=(
     "07_shell_config.sh"
     "08_goland_config.sh"
     "09_ssh_key.sh"
+    "10_cmds.sh"
 )
 
 # Очищаем старый лог-файл перед новым запуском (или создаем новый)
