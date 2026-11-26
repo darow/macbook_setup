@@ -8,7 +8,7 @@
 - `main.sh` — точка входа: последовательно запускает шаги из массива `STEPS`, весь вывод дублируется через `tee` в `setup_log.txt`.
 - `NN_name.sh` — нумерованные шаги (01–10). Новый шаг = новый файл со следующим номером + строка в `STEPS` в `main.sh`.
 - `lib/common.sh` — общие хелперы: `log_ok/log_info/log_warn/log_err`, `ensure_line_in_file`, `find_goland_dir`, `require_brew`. Подключение: `source "$(cd "$(dirname "$0")" && pwd)/lib/common.sh"`.
-- `10_cmds.sh` — генерирует персональный CLI-хелпер `~/.local/bin/c` (подкоманды: `help`, `tlog`, `pods`).
+- `10_cmds.sh` — генерирует персональный CLI-хелпер `~/.local/bin/c` (подкоманды: `help`, `tlog`, `klogin`, `kpods`, `kfw`, `klogs`, `krestart`, `vget`, `vren`, `vtok`).
 
 ## Конвенции
 
