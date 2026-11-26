@@ -4,12 +4,12 @@ set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/lib/common.sh"
 
 # Персональный CLI-хелпер: один бинарник в PATH с подкомандами, как таргеты в makefile.
-# Документация: README.md, раздел «CLI-хелпер c».
+# Документация: README.md, раздел «CLI-хелпер f».
 
 BIN_DIR="$HOME/.local/bin"
-BIN_PATH="$BIN_DIR/c"
+BIN_PATH="$BIN_DIR/f"
 
-log_info "Установка CLI-хелпера 'c' → $BIN_PATH"
+log_info "Установка CLI-хелпера 'f' → $BIN_PATH"
 
 mkdir -p "$BIN_DIR"
 cat > "$BIN_PATH" << 'EOF'
@@ -25,21 +25,21 @@ cmd="${1:-help}"
 case "$cmd" in
     help)
         cat << 'HELP'
-Usage: c <command>
+Usage: f <command>
 
 Commands:
   help     показать этот список
   tlog     логин в Teleport: tsh17 login --proxy=tp.rwb.ru --user=haleckiy.a2
 
   kpods    поды notifier: kubectl -n notifier get pods -o wide
-  klogs    логи сервиса notifier: c klogs <svc> [n] — с n: последние n строк, без n: следить (-f, все реплики)
-  krestart рестарт деплоя в notifier: c krestart <svc> (rollout restart + status)
+  klogs    логи сервиса notifier: f klogs <svc> [n] — с n: последние n строк, без n: следить (-f, все реплики)
+  krestart рестарт деплоя в notifier: f krestart <svc> (rollout restart + status)
   klogin   kube login в stage-кластер: tsh17 kube login k8s.tns-stage-el
-  kfw      port-forward PG stage: localhost:5432 → sender-router (мастер, Ctrl+C чтобы остановить)
+  kfw      PG-туннели: f kfw crd|push|router (старт в фоне), f kfw status, f kfw stop — crd:15432 push:15433 router:5432
 
-  vget     секрет из Vault: c vget <path> [field] — без field: список ключей; с field: значение
+  vget     секрет из Vault: f vget <path> [field] — без field: список ключей; с field: значение
   vren     продлить токен Vault (renew-self)
-  vtok     обновить токен Vault: c vtok [<token>] — без аргумента берёт из буфера обмена, проверяет и сохраняет
+  vtok     обновить токен Vault: f vtok [<token>] — без аргумента берёт из буфера обмена, проверяет и сохраняет
 HELP
         ;;
     tlog)
@@ -56,11 +56,55 @@ HELP
         ;;
     kfw)
         shift
-        exec kubectl -n sender port-forward svc/sender-router-pgsql-cl1-stage-haproxy 5432:5000 "$@"
+        action="${1:?Использование: f kfw crd|push|router|status|stop}"
+        shift || true
+        FWDIR="$HOME/.k8s-fw"
+        mkdir -p "$FWDIR"
+        case "$action" in
+            crd)
+                nohup kubectl -n notifier port-forward svc/notifier-crd-pgsql-cl1-stage-haproxy 15432:5000 >"$FWDIR/crd.log" 2>&1 &
+                echo $! > "$FWDIR/crd.pid"
+                echo "crd: localhost:15432 -> notifier-crd-pgsql (pid $(cat "$FWDIR/crd.pid"))"
+                ;;
+            push)
+                nohup kubectl -n notifier port-forward svc/notifier-push-wrk-pgsql-cl1-stage-haproxy 15433:5000 >"$FWDIR/push.log" 2>&1 &
+                echo $! > "$FWDIR/push.pid"
+                echo "push: localhost:15433 -> notifier-push-wrk-pgsql (pid $(cat "$FWDIR/push.pid"))"
+                ;;
+            router)
+                nohup kubectl -n sender port-forward svc/sender-router-pgsql-cl1-stage-haproxy 5432:5000 >"$FWDIR/router.log" 2>&1 &
+                echo $! > "$FWDIR/router.pid"
+                echo "router: localhost:5432 -> sender-router-pgsql (pid $(cat "$FWDIR/router.pid"))"
+                ;;
+            status)
+                for n in crd push router; do
+                    pf="$FWDIR/$n.pid"
+                    if [ -f "$pf" ] && kill -0 "$(cat "$pf")" 2>/dev/null; then
+                        echo "$n: UP (pid $(cat "$pf"))"
+                    else
+                        echo "$n: down"
+                    fi
+                done
+                ;;
+            stop)
+                for n in crd push router; do
+                    pf="$FWDIR/$n.pid"
+                    if [ -f "$pf" ] && kill "$(cat "$pf")" 2>/dev/null; then
+                        echo "$n: stopped"
+                    fi
+                    rm -f "$pf"
+                done
+                ;;
+            *)
+                echo "Неизвестное действие: $action" >&2
+                echo "Использование: f kfw crd|push|router|status|stop" >&2
+                exit 1
+                ;;
+        esac
         ;;
     klogs)
         shift
-        svc="${1:?Использование: c klogs <svc> [n]}"
+        svc="${1:?Использование: f klogs <svc> [n]}"
         if [ $# -ge 2 ]; then
             exec kubectl -n notifier logs --tail="$2" -l "app.kubernetes.io/instance=$svc" --prefix "$@"
         else
@@ -69,13 +113,13 @@ HELP
         ;;
     krestart)
         shift
-        svc="${1:?Использование: c krestart <svc>}"
+        svc="${1:?Использование: f krestart <svc>}"
         kubectl -n notifier rollout restart "deployment/$svc"
         exec kubectl -n notifier rollout status "deployment/$svc"
         ;;
     vget)
         shift
-        path="${1:?Использование: c vget <vault/path> [field]}"
+        path="${1:?Использование: f vget <vault/path> [field]}"
         field="${2:-}"
         [ -f "$HOME/.vault-token" ] || { echo "Нет $HOME/.vault-token — положи туда Vault-токен" >&2; exit 1; }
         tok="$(cat "$HOME/.vault-token")"
@@ -94,7 +138,7 @@ HELP
         [ -f "$HOME/.vault-token" ] || { echo "Нет $HOME/.vault-token — положи туда Vault-токен" >&2; exit 1; }
         tok="$(cat "$HOME/.vault-token")"
         curl -sf --max-time 10 -X POST -H "X-Vault-Token: $tok" "$VAULT_ADDR/v1/auth/token/renew-self" \
-            | jq -r '"Токен продлён, ttl=" + (.auth.lease_duration|tostring) + "c"'
+            | jq -r '"Токен продлён, ttl=" + (.auth.lease_duration|tostring) + "f"'
         ;;
     vtok)
         shift
@@ -102,7 +146,7 @@ HELP
         [ -z "$newtok" ] && newtok="$(pbpaste 2>/dev/null || true)"
         newtok="$(printf '%s' "$newtok" | tr -d '[:space:]')"
         if [ -z "$newtok" ]; then
-            echo "Использование: c vtok [<token>]" >&2
+            echo "Использование: f vtok [<token>]" >&2
             echo "Без аргумента берёт токен из буфера обмена (pbpaste)." >&2
             exit 1
         fi
@@ -114,7 +158,7 @@ HELP
         ;;
     *)
         echo "Неизвестная команда: $cmd" >&2
-        echo "Список команд: c help" >&2
+        echo "Список команд: f help" >&2
         exit 1
         ;;
 esac
@@ -124,7 +168,7 @@ echo "  ✔ Установлен $BIN_PATH"
 
 # PATH для ~/.local/bin в zsh
 if ensure_line_in_file "$HOME/.zshrc" ".local/bin" \
-    "# c (персональный CLI-хелпер)" \
+    "# f (персональный CLI-хелпер)" \
     'export PATH="$HOME/.local/bin:$PATH"'; then
     echo "  ✔ ~/.local/bin добавлен в PATH (~/.zshrc)"
 else
@@ -132,12 +176,12 @@ else
 fi
 
 # ── Системный cron: ежечасное продление Vault-токена ─────────
-# Аналог crontab-строки: 0 * * * * ~/.local/bin/c vren >> ~/.vault-renew.log 2>&1
-if crontab -l 2>/dev/null | grep -qF "c vren"; then
+# Аналог crontab-строки: 0 * * * * ~/.local/bin/f vren >> ~/.vault-renew.log 2>&1
+if crontab -l 2>/dev/null | grep -qF "f vren"; then
     echo "  ⏭  Cron продления Vault-токена уже настроен."
 else
     (crontab -l 2>/dev/null; echo "0 * * * * $BIN_PATH vren >> $HOME/.vault-renew.log 2>&1") | crontab -
     echo "  ✔ Добавлен cron: ежечасно продлевает Vault-токен (лог: ~/.vault-renew.log)"
 fi
 
-log_ok "Готово. Откройте новый терминал (или: source ~/.zshrc) и попробуйте: c help"
+log_ok "Готово. Откройте новый терминал (или: source ~/.zshrc) и попробуйте: f help"
