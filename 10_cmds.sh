@@ -106,8 +106,8 @@ HELP
             echo "Без аргумента берёт токен из буфера обмена (pbpaste)." >&2
             exit 1
         fi
-        resp="$(curl -sf --max-time 10 -H "X-Vault-Token: $newtok" "$VAULT_ADDR/v1/auth/token/lookup")" \
-            || { echo "❌ Токен невалиден (lookup failed) — НЕ сохранён" >&2; exit 1; }
+        resp="$(curl -sf --max-time 10 -H "X-Vault-Token: $newtok" "$VAULT_ADDR/v1/auth/token/lookup-self")" \
+            || { echo "❌ Токен невалиден (lookup-self failed) — НЕ сохранён" >&2; exit 1; }
         printf '%s' "$newtok" > "$HOME/.vault-token"
         chmod 600 "$HOME/.vault-token"
         echo "✔ Токен сохранён в ~/.vault-token, ttl=$(printf '%s' "$resp" | jq -r '.data.ttl')с, policies: $(printf '%s' "$resp" | jq -r '.data.policies | join(",")')"
